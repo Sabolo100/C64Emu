@@ -140,6 +140,13 @@ body.view-expanded .c64-screen {
   border-color: #ffffff;
 }
 
+.hint-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #b8c2ff;
+  border-color: #b8c2ff;
+}
+
 @media (max-width: 860px) {
   .c64-screen {
     min-height: 66vh;

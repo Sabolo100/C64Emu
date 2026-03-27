@@ -39,6 +39,7 @@ Fontos:
 - A kod futtatasa `RUN` paranccsal tortenik.
 - `SHIFT+ENTER`: kovetkezo sor automatikus felajanlasa (`+10`).
 - Programozasi modban nem sorszamos sorra: `?LINE NUMBER EXPECTED`.
+- A kepernyotartalom + program allapot automatikusan mentodik bongeszo `localStorage`-ba, igy README megnyitasa vagy lap ujratoltes utan visszaall.
 
 ## Kepernyo scroll
 
@@ -64,6 +65,21 @@ Fontos:
 - Csatorna: `OPEN`, `CLOSE`, `CMD`, `PRINT#`, `INPUT#`, `GET#`
 - BASIC: `PRINT`, `INPUT`, `READ`, `DATA`, `RESTORE`, `LET`, `IF/THEN/ELSE`, `GOTO`, `GOSUB`, `RETURN`, `ON ... GOTO/GOSUB`, `FOR/NEXT`, `STOP`, `END`, `REM`, `POKE`, `WAIT`, `GET`, `CLR`, `DIM`, `DEF FN`, `SYS`
 - Grafika (C128 stilus is): `GRAPHIC`, `SCNCLR`, `COLOR`, `DRAW`, `BOX`, `CIRCLE`, `PAINT`, valamint `PLOT`, `LINE`, `RECT`, `CLSG`
+- AI: footer `AI` gomb -> feladatbol BASIC program generalasa, automatikus betoltes + mentes
+
+## AI BASIC generator
+
+- A footerben van egy `AI` gomb.
+- Kattintas utan promptban megadhatsz feladatot (pelda: `csinalj amoba jatekot basicben`).
+- A generalt program:
+  - bekerul az editorba (sorszamozott sorokkal),
+  - azonnal szerkesztheto,
+  - automatikusan mentodik `AI-...` nevvel localStorage-ba.
+- Ha nincs backend API kulcs, a gomb `AI OFF` es inaktiv.
+
+Vercel env valtozok:
+- `OPENAI_API_KEY` (szukseges az AI funkciohoz)
+- `OPENAI_MODEL` (opcionalis, alap: `gpt-4.1-mini`)
 
 ## Szintaxis referencia (tamogatott forma)
 

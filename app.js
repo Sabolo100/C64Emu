@@ -2,6 +2,7 @@ let screenEl = document.getElementById("screen");
 let screenTextEl = document.getElementById("screenText");
 let canvas = document.getElementById("gfx");
 let viewToggleEl = document.getElementById("viewToggle");
+let aiGenerateEl = document.getElementById("aiGenerateButton");
 let ctx = null;
 
 const C64_COLUMNS = 40;
@@ -10,6 +11,8 @@ const DEFAULT_ARRAY_BOUND = 10;
 const DEFAULT_DEVICE = 8;
 const STORAGE_PREFIX = "c64.basic.program.";
 const STORAGE_LAST = "c64.basic.last";
+const STORAGE_SESSION = "c64.basic.session.v1";
+const SESSION_VERSION = 1;
 const TESTPACK_INDEX_NAME = "TP00-INDEX";
 
 const TEST_PACK_PROGRAMS = [
@@ -248,6 +251,16 @@ const machine = {
   gfx: createDefaultGraphicsState(),
 };
 
+let sessionPersistTimer = null;
+let suspendSessionPersist = false;
+
+const aiState = {
+  enabled: false,
+  busy: false,
+  checked: false,
+  model: "",
+};
+
 function createNoopContext() {
   return {
     fillStyle: "#000000",
@@ -304,6 +317,9 @@ function ensureDomReady() {
   if (!viewToggleEl) {
     viewToggleEl = document.getElementById("viewToggle");
   }
+  if (!aiGenerateEl) {
+    aiGenerateEl = document.getElementById("aiGenerateButton");
+  }
 
   if (screenEl && screenEl.setAttribute && !screenEl.hasAttribute("tabindex")) {
     screenEl.setAttribute("tabindex", "0");
@@ -323,11 +339,15 @@ function ensureDomReady() {
 
 function boot() {
   resizeCanvas();
-  applyGraphicModePresentation();
-  clearGraphics();
-  printBootBanner();
+  const restored = restoreSessionState();
+  if (!restored) {
+    applyGraphicModePresentation();
+    clearGraphics();
+    printBootBanner();
+  }
   focusScreen();
   startCursorBlink();
+  refreshAiAvailability();
 }
 
 function printBootBanner() {
@@ -378,6 +398,7 @@ function appendScreenText(text) {
   if (terminal.viewOffset === 0) {
     terminal.viewOffset = 0;
   }
+  scheduleSessionPersist();
 }
 
 function screenWrite(text = "") {
@@ -393,6 +414,7 @@ function screenWriteLine(text = "") {
 function clearText() {
   terminal.text = "";
   terminal.viewOffset = 0;
+  scheduleSessionPersist();
   render();
 }
 
@@ -480,6 +502,7 @@ function clearGraphics(mode = machine.gfx.mode, splitRow = machine.gfx.splitRow)
   if (clipHeight < canvas.height) {
     ctx.fillRect(0, clipHeight, canvas.width, canvas.height - clipHeight);
   }
+  scheduleSessionPersist();
 }
 
 function drawPixel(x, y, color = machine.textColor) {
@@ -719,6 +742,149 @@ function setTextColor(colorIndex) {
   if (screenTextEl) {
     screenTextEl.style.color = C64_COLORS[machine.textColor];
   }
+  scheduleSessionPersist();
+}
+
+function createSessionSnapshot() {
+  return {
+    version: SESSION_VERSION,
+    savedAt: new Date().toISOString(),
+    program: getSortedProgramLines(),
+    programVersion: machine.programVersion,
+    programmingMode: machine.programmingMode,
+    textColor: machine.textColor,
+    expandedView: machine.expandedView,
+    terminalText: terminal.text,
+    terminalInput: terminal.input,
+    cursorPos: terminal.cursorPos,
+    viewOffset: terminal.viewOffset,
+    programEditLineNumber: terminal.programEditLineNumber,
+    gfx: {
+      mode: machine.gfx.mode,
+      splitRow: machine.gfx.splitRow,
+      colorSources: Array.isArray(machine.gfx.colorSources) ? machine.gfx.colorSources.slice(0, 7) : null,
+      cursorX: machine.gfx.cursorX,
+      cursorY: machine.gfx.cursorY,
+    },
+  };
+}
+
+function persistSessionNow() {
+  if (suspendSessionPersist || typeof localStorage === "undefined") {
+    return;
+  }
+  try {
+    localStorage.setItem(STORAGE_SESSION, JSON.stringify(createSessionSnapshot()));
+  } catch (error) {
+    // Best effort only: session persistence should never break the emulator.
+  }
+}
+
+function scheduleSessionPersist() {
+  if (suspendSessionPersist) {
+    return;
+  }
+  if (sessionPersistTimer) {
+    clearTimeout(sessionPersistTimer);
+  }
+  sessionPersistTimer = setTimeout(() => {
+    sessionPersistTimer = null;
+    persistSessionNow();
+  }, 120);
+}
+
+function restoreSessionState() {
+  if (typeof localStorage === "undefined") {
+    return false;
+  }
+
+  let parsed;
+  try {
+    const raw = localStorage.getItem(STORAGE_SESSION);
+    if (!raw) {
+      return false;
+    }
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    return false;
+  }
+
+  if (!parsed || parsed.version !== SESSION_VERSION) {
+    return false;
+  }
+
+  suspendSessionPersist = true;
+  try {
+    const lines = sanitizeProgramLines(parsed.program);
+    machine.program.clear();
+    lines.forEach(([lineNumber, text]) => {
+      machine.program.set(Number(lineNumber), String(text));
+    });
+    machine.programVersion = Math.max(0, Math.trunc(Number(parsed.programVersion) || 0));
+    machine.programmingMode = Boolean(parsed.programmingMode);
+    machine.continuation = null;
+    machine.running = false;
+    machine.stopRequested = false;
+    machine.waitInput = null;
+
+    terminal.text = String(parsed.terminalText ?? "");
+    terminal.input = String(parsed.terminalInput ?? "");
+    const cursorPos = Math.trunc(Number(parsed.cursorPos));
+    if (Number.isFinite(cursorPos)) {
+      terminal.cursorPos = Math.max(0, Math.min(terminal.input.length, cursorPos));
+    } else {
+      terminal.cursorPos = terminal.input.length;
+    }
+    terminal.viewOffset = Math.max(0, Math.trunc(Number(parsed.viewOffset) || 0));
+
+    const lineForEdit = parsed.programEditLineNumber == null ? null : Math.trunc(Number(parsed.programEditLineNumber));
+    if (lineForEdit != null && machine.program.has(lineForEdit)) {
+      terminal.programEditLineNumber = lineForEdit;
+      terminal.programEditLineIndex = findProgramLineIndexInText(lineForEdit);
+    } else {
+      clearProgramEditCursor();
+    }
+
+    if (parsed.textColor != null) {
+      setTextColor(clampColor(parsed.textColor));
+    }
+
+    const savedGfx = parsed.gfx;
+    if (savedGfx && typeof savedGfx === "object") {
+      const mode = Math.trunc(Number(savedGfx.mode));
+      if (Number.isFinite(mode)) {
+        machine.gfx.mode = Math.max(0, Math.min(5, mode));
+      }
+
+      machine.gfx.splitRow = normalizeSplitRow(savedGfx.splitRow ?? machine.gfx.splitRow);
+      machine.gfx.cursorX = Number(savedGfx.cursorX) || 0;
+      machine.gfx.cursorY = Number(savedGfx.cursorY) || 0;
+
+      if (Array.isArray(savedGfx.colorSources)) {
+        const colors = machine.gfx.colorSources.slice();
+        for (let i = 0; i < 7; i += 1) {
+          if (savedGfx.colorSources[i] != null) {
+            colors[i] = clampColor(savedGfx.colorSources[i]);
+          }
+        }
+        machine.gfx.colorSources = colors;
+      }
+    }
+
+    machine.expandedView = Boolean(parsed.expandedView);
+    if (document?.body?.classList) {
+      document.body.classList.toggle("view-expanded", machine.expandedView);
+    }
+    updateViewToggleLabel();
+
+    applyGraphicModePresentation();
+    clearGraphics();
+    return true;
+  } catch (error) {
+    return false;
+  } finally {
+    suspendSessionPersist = false;
+  }
 }
 
 function getWrappedBuffer() {
@@ -840,6 +1006,188 @@ function updateViewToggleLabel() {
   viewToggleEl.textContent = machine.expandedView ? "NORMAL NEZET" : "MAX NEZET";
 }
 
+function updateAiButtonState() {
+  if (!aiGenerateEl) {
+    return;
+  }
+
+  if (aiState.busy) {
+    aiGenerateEl.disabled = true;
+    aiGenerateEl.textContent = "AI...";
+    aiGenerateEl.title = "AI BASIC generator fut...";
+    return;
+  }
+
+  if (!aiState.checked) {
+    aiGenerateEl.disabled = true;
+    aiGenerateEl.textContent = "AI?";
+    aiGenerateEl.title = "AI BASIC generator ellenorzes...";
+    return;
+  }
+
+  if (!aiState.enabled) {
+    aiGenerateEl.disabled = true;
+    aiGenerateEl.textContent = "AI OFF";
+    aiGenerateEl.title = "OPENAI_API_KEY nincs beallitva ezen a deployon.";
+    return;
+  }
+
+  aiGenerateEl.disabled = false;
+  aiGenerateEl.textContent = "AI";
+  aiGenerateEl.title = aiState.model
+    ? `AI BASIC generator (${aiState.model})`
+    : "AI BASIC generator";
+}
+
+async function refreshAiAvailability() {
+  aiState.checked = false;
+  aiState.enabled = false;
+  aiState.model = "";
+  updateAiButtonState();
+
+  try {
+    const response = await fetch("./api/generate-basic", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    aiState.enabled = Boolean(response.ok && payload?.enabled);
+    aiState.model = payload?.model ? String(payload.model) : "";
+  } catch (error) {
+    aiState.enabled = false;
+    aiState.model = "";
+  } finally {
+    aiState.checked = true;
+    updateAiButtonState();
+  }
+}
+
+function buildAiProgramName(title = "") {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const cleaned = String(title || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "")
+    .slice(0, 8);
+  return cleaned ? `AI-${cleaned}-${stamp}` : `AI-PROG-${stamp}`;
+}
+
+function toAiBasicError(error) {
+  if (error instanceof BasicError) {
+    return error.message;
+  }
+  if (error && typeof error.message === "string" && error.message) {
+    return error.message.toUpperCase();
+  }
+  return "AI ERROR";
+}
+
+async function requestAiProgram(taskText) {
+  let response;
+  try {
+    response = await fetch("./api/generate-basic", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ task: taskText }),
+    });
+  } catch (error) {
+    throw new BasicError("AI SERVICE UNREACHABLE");
+  }
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    payload = null;
+  }
+
+  if (response.status === 503 || payload?.enabled === false) {
+    aiState.enabled = false;
+    aiState.checked = true;
+    updateAiButtonState();
+    throw new BasicError("AI DISABLED");
+  }
+
+  if (!response.ok) {
+    const message = payload?.error ? String(payload.error).toUpperCase() : "AI REQUEST ERROR";
+    throw new BasicError(message);
+  }
+
+  if (!payload || !Array.isArray(payload.lines)) {
+    throw new BasicError("AI RESPONSE ERROR");
+  }
+
+  return payload;
+}
+
+async function openAiProgramPrompt() {
+  if (machine.running) {
+    screenWriteLine("?AI DISABLED WHILE RUNNING");
+    return;
+  }
+  if (!aiState.enabled) {
+    screenWriteLine("?AI DISABLED");
+    screenWriteLine("READY.");
+    return;
+  }
+  if (aiState.busy) {
+    return;
+  }
+
+  const input = window.prompt(
+    "AI BASIC feladat (pl: Csinolj amoba jatekot BASIC-ben):",
+    "",
+  );
+  if (input == null) {
+    focusScreen();
+    return;
+  }
+
+  const taskText = String(input).trim();
+  if (!taskText) {
+    focusScreen();
+    return;
+  }
+
+  aiState.busy = true;
+  updateAiButtonState();
+  screenWriteLine("AI GENERATING BASIC PROGRAM...");
+
+  try {
+    const aiPayload = await requestAiProgram(taskText);
+    const lines = sanitizeProgramLines(aiPayload.lines);
+    if (!lines.length) {
+      throw new BasicError("AI EMPTY PROGRAM");
+    }
+
+    loadProgramIntoMachine(lines, { programmingMode: true });
+    const programTitle = aiPayload.title ? String(aiPayload.title) : "";
+    const saveName = saveProgramSnapshot(buildAiProgramName(programTitle), lines, {
+      source: "ai",
+      device: DEFAULT_DEVICE,
+    });
+
+    screenWriteLine(`AI PROGRAM SAVED AS "${saveName}"`);
+    listProgram("LIST");
+    screenWriteLine("READY.");
+  } catch (error) {
+    screenWriteLine(`?${toAiBasicError(error)}`);
+    screenWriteLine("READY.");
+  } finally {
+    aiState.busy = false;
+    updateAiButtonState();
+    focusScreen();
+  }
+}
+
 function setExpandedView(enabled) {
   machine.expandedView = Boolean(enabled);
   if (document?.body?.classList) {
@@ -847,6 +1195,7 @@ function setExpandedView(enabled) {
   }
   terminal.viewOffset = 0;
   updateViewToggleLabel();
+  scheduleSessionPersist();
   render();
 }
 
@@ -857,12 +1206,14 @@ function toggleExpandedView() {
 function resetInputLine() {
   terminal.input = "";
   terminal.cursorPos = 0;
+  scheduleSessionPersist();
 }
 
 function setInputLine(value) {
   terminal.input = String(value ?? "");
   terminal.cursorPos = terminal.input.length;
   terminal.viewOffset = 0;
+  scheduleSessionPersist();
   render();
 }
 
@@ -989,6 +1340,7 @@ function commitInputLine() {
     appendScreenText(`${terminal.input}\n`);
   }
   terminal.viewOffset = 0;
+  scheduleSessionPersist();
   resetInputLine();
   render();
 }
@@ -999,6 +1351,7 @@ function insertTextAtCursor(text) {
   terminal.input = `${left}${text}${right}`;
   terminal.cursorPos += text.length;
   terminal.viewOffset = 0;
+  scheduleSessionPersist();
   render();
 }
 
@@ -1099,6 +1452,13 @@ if (viewToggleEl && viewToggleEl.addEventListener) {
   updateViewToggleLabel();
 }
 
+if (aiGenerateEl && aiGenerateEl.addEventListener) {
+  aiGenerateEl.addEventListener("click", async () => {
+    await openAiProgramPrompt();
+  });
+  updateAiButtonState();
+}
+
 window.addEventListener("resize", () => {
   resizeCanvas();
   render();
@@ -1123,6 +1483,10 @@ window.addEventListener("pointerdown", (event) => {
     setInputLine("");
   }
   focusScreen();
+});
+
+window.addEventListener("beforeunload", () => {
+  persistSessionNow();
 });
 
 window.addEventListener("keydown", (event) => {
@@ -1189,6 +1553,7 @@ window.addEventListener("keydown", (event) => {
           terminal.input.slice(0, terminal.cursorPos - 1) + terminal.input.slice(terminal.cursorPos);
         terminal.cursorPos -= 1;
         terminal.viewOffset = 0;
+        scheduleSessionPersist();
         render();
       }
       return;
@@ -1197,6 +1562,7 @@ window.addEventListener("keydown", (event) => {
         terminal.input =
           terminal.input.slice(0, terminal.cursorPos) + terminal.input.slice(terminal.cursorPos + 1);
         terminal.viewOffset = 0;
+        scheduleSessionPersist();
         render();
       }
       return;
@@ -1281,6 +1647,7 @@ async function handleInput(rawInput, options = {}) {
     machine.continuation = null;
     machine.programmingMode = true;
     clearProgramEditCursor();
+    scheduleSessionPersist();
 
     if (options.shiftPrefill) {
       clearProgramEditCursor();
@@ -1463,6 +1830,7 @@ function printHelp() {
   screenWriteLine("EDIT: ARROW UP/DOWN PROGRAM LINES | CLICK LIST LINE TO EDIT");
   screenWriteLine("SCROLL: ALT+ARROW OR PAGEUP/PAGEDOWN");
   screenWriteLine("TIP: SHIFT+ENTER = NEXT LINE PREFILL (+10)");
+  screenWriteLine("AI: USE FOOTER AI BUTTON (API KEY REQUIRED)");
   screenWriteLine("README: CLICK README LINK BELOW");
 }
 
@@ -2502,6 +2870,7 @@ function executeGraphic(stmt, state) {
   if (clearFlag === 1) {
     clearGraphics(mode, splitRow);
   }
+  scheduleSessionPersist();
 }
 
 function executeScnclr(stmt, state) {
@@ -2556,6 +2925,7 @@ function executeColor(stmt, state) {
       clearGraphics();
     }
   }
+  scheduleSessionPersist();
 }
 
 function executePlot(stmt, state) {
@@ -3435,6 +3805,22 @@ function sanitizeProgramLines(lines) {
   return Array.from(temp.entries()).sort((a, b) => a[0] - b[0]);
 }
 
+function loadProgramIntoMachine(lines, options = {}) {
+  const cleanLines = sanitizeProgramLines(lines);
+  machine.program.clear();
+  cleanLines.forEach(([lineNumber, text]) => {
+    machine.program.set(Number(lineNumber), String(text));
+  });
+
+  machine.programVersion += 1;
+  machine.continuation = null;
+  machine.programmingMode = options.programmingMode == null ? true : Boolean(options.programmingMode);
+  clearProgramEditCursor();
+  resetInputLine();
+  scheduleSessionPersist();
+  return cleanLines;
+}
+
 function saveProgramSnapshot(name, lines, options = {}) {
   const normalizedName = normalizeProgramName(name);
   const cleanLines = sanitizeProgramLines(lines);
@@ -3521,15 +3907,7 @@ function executeLoad(command) {
 
   const parsed = JSON.parse(raw);
   const lines = Array.isArray(parsed.lines) ? parsed.lines : [];
-
-  machine.program.clear();
-  lines.forEach(([lineNumber, text]) => {
-    machine.program.set(Number(lineNumber), String(text));
-  });
-
-  machine.programVersion += 1;
-  machine.continuation = null;
-  machine.programmingMode = true;
+  loadProgramIntoMachine(lines, { programmingMode: true });
   localStorage.setItem(STORAGE_LAST, normalized);
 
   screenWriteLine(`LOADED "${normalized}"`);

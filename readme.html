@@ -66,6 +66,7 @@
         <li>A sorszammal kezdo sorok csak mentesre kerulnek, nem futnak le Enterre.</li>
         <li>A kod futtatasa kulon <code>RUN</code> paranccsal tortenik.</li>
         <li><code>SHIFT+ENTER</code> automatikusan felajanlja a kovetkezo sorszamot (+10).</li>
+        <li>A kepernyotartalom + program allapot automatikusan mentodik <code>localStorage</code>-ba, igy README utan visszaall.</li>
       </ul>
 
       <h2>Kepernyo mozgas</h2>
@@ -112,6 +113,16 @@
         <li>Adatkezeles: <code>DATA</code>, <code>READ</code>, <code>RESTORE</code>, <code>DIM</code>, <code>DEF FN</code>, <code>LET</code>, <code>CLR</code></li>
         <li>Rendszer: <code>POKE</code>, <code>WAIT</code>, <code>GET</code>, <code>SYS</code></li>
         <li>Grafika (C128 stilus is): <code>GRAPHIC</code>, <code>SCNCLR</code>, <code>COLOR</code>, <code>DRAW</code>, <code>BOX</code>, <code>CIRCLE</code>, <code>PAINT</code>, valamint <code>PLOT</code>, <code>LINE</code>, <code>RECT</code>, <code>CLSG</code></li>
+        <li>AI: footer <code>AI</code> gomb feladatbol BASIC program generalasra.</li>
+      </ul>
+
+      <h2>AI BASIC generator</h2>
+      <ul>
+        <li>Kattints az also <code>AI</code> gombra.</li>
+        <li>Promptban add meg a feladatot (pl. amoba jatek BASIC-ben).</li>
+        <li>A program automatikusan bekerul az editorba es mentodik <code>AI-...</code> nevvel.</li>
+        <li>Ha nincs API kulcs a deployban, a gomb <code>AI OFF</code> es inaktiv.</li>
+        <li>Vercel env: <code>OPENAI_API_KEY</code> (kotelezo), <code>OPENAI_MODEL</code> (opcionalis).</li>
       </ul>
 
       <h2>Szintaxis referencia</h2>
