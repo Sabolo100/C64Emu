@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C64 Emulator README</title>
+    <style>
+      :root {
+        --bg: #352879;
+        --panel: #4a3cb3;
+        --border: #7869d1;
+        --text: #d9e0ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: "Courier New", monospace;
+        background: radial-gradient(circle at 20% 8%, #5f50d5 0%, var(--bg) 45%, #281d62 100%);
+        color: var(--text);
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        border: 12px solid var(--border);
+        background: var(--panel);
+        padding: 20px;
+      }
+      h1,
+      h2 {
+        margin-top: 0;
+      }
+      code {
+        color: #ffffff;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      a {
+        color: #ffffff;
+      }
+      .small {
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>C64 BASIC Emulator README</h1>
+      <p class="small">Ez a dokumentum a <code>README.md</code> webes nezetet adja.</p>
+
+      <h2>Alap hasznalat</h2>
+      <ul>
+        <li>Sorszamozott programsor: <code>10 PRINT "HELLO"</code></li>
+        <li>Sor torlese: <code>10</code></li>
+        <li>Listazas: <code>LIST</code> vagy <code>LIST 100-300</code></li>
+        <li>Futtatas: <code>RUN</code> vagy <code>RUN 100</code></li>
+        <li>Folytatas STOP/BREAK utan: <code>CONT</code></li>
+        <li>Uj program: <code>NEW</code></li>
+      </ul>
+
+      <h2>Programozasi mod</h2>
+      <ul>
+        <li>A sorszammal kezdo sorok csak mentesre kerulnek, nem futnak le Enterre.</li>
+        <li>A kod futtatasa kulon <code>RUN</code> paranccsal tortenik.</li>
+        <li><code>SHIFT+ENTER</code> automatikusan felajanlja a kovetkezo sorszamot (+10).</li>
+      </ul>
+
+      <h2>Kepernyo mozgas</h2>
+      <ul>
+        <li><code>ArrowUp</code> / <code>ArrowDown</code>: programsorok kozti lepkedes szerkeszteshez.</li>
+        <li>Ha a legutolso programsoron vagy, <code>ArrowDown</code> visszavisz az also parancssorra.</li>
+        <li><code>LIST</code> utan egy sorszamozott sorra kattintva szerkesztesre betolt.</li>
+        <li>Programsor-szerkesztes kozben, ha nem programsorra kattintasz, visszalep a parancssorra.</li>
+        <li>Szerkesztes Enterre helyben frissul, nincs kulon duplikalt uj sor.</li>
+        <li><code>Alt+ArrowUp</code> / <code>Alt+ArrowDown</code>: scroll a kepernyobufferben.</li>
+        <li><code>PageUp</code> / <code>PageDown</code>: gyorsabb scroll.</li>
+        <li>Eger gorgetes is mukodik a kepernyon.</li>
+      </ul>
+
+      <h2>Nezet valtas</h2>
+      <ul>
+        <li><code>MAX NEZET</code>: nagyobb befoglalo terulet, valtozatlan font meret.</li>
+        <li><code>NORMAL NEZET</code>: visszavalt az alap meretre.</li>
+        <li>Gyorsbillentyu: <code>F9</code>.</li>
+      </ul>
+
+      <h2>Publikus deploy (Vercel)</h2>
+      <ul>
+        <li>Tedd fel ezt a projektet GitHub repositoryba.</li>
+        <li>Vercelben: <code>Add New Project</code>, majd importald a repositoryt.</li>
+        <li>Ha nem repository gyokerben van a projekt, <code>Root Directory</code>: <code>ChatGPT Codex/C64 Emulator</code>.</li>
+        <li>Framework: <code>Other</code>, build command nem szukseges.</li>
+        <li>A gyoker URL automatikusan az <code>index.html</code>-re mutat a <code>vercel.json</code> miatt.</li>
+      </ul>
+
+      <h2>Tarolas (lokalis)</h2>
+      <ul>
+        <li><code>SAVE "PROG",8</code>: program mentese <code>localStorage</code>-ba.</li>
+        <li><code>LOAD "PROG",8</code>: program betoltese.</li>
+        <li><code>LOAD "*",8,1</code>: utolso mentett program betoltese.</li>
+        <li><code>VERIFY "PROG",8</code>: program osszevetese a mentettel.</li>
+      </ul>
+
+      <h2>Tamogatott BASIC elemek</h2>
+      <ul>
+        <li>Programkezeles: <code>LIST</code>, <code>RUN</code>, <code>NEW</code>, <code>CONT</code>, <code>TESTPACK</code></li>
+        <li>I/O es csatorna: <code>OPEN</code>, <code>CLOSE</code>, <code>CMD</code>, <code>PRINT#</code>, <code>INPUT#</code>, <code>GET#</code></li>
+        <li>Vezerles: <code>IF THEN ELSE</code>, <code>GOTO</code>, <code>GOSUB/RETURN</code>, <code>ON ... GOTO/GOSUB</code>, <code>FOR/NEXT</code>, <code>STOP</code>, <code>END</code></li>
+        <li>Adatkezeles: <code>DATA</code>, <code>READ</code>, <code>RESTORE</code>, <code>DIM</code>, <code>DEF FN</code>, <code>LET</code>, <code>CLR</code></li>
+        <li>Rendszer: <code>POKE</code>, <code>WAIT</code>, <code>GET</code>, <code>SYS</code></li>
+        <li>Grafika (C128 stilus is): <code>GRAPHIC</code>, <code>SCNCLR</code>, <code>COLOR</code>, <code>DRAW</code>, <code>BOX</code>, <code>CIRCLE</code>, <code>PAINT</code>, valamint <code>PLOT</code>, <code>LINE</code>, <code>RECT</code>, <code>CLSG</code></li>
+      </ul>
+
+      <h2>Szintaxis referencia</h2>
+      <ul>
+        <li><code>LIST [kezdo[-zaro]]</code>, <code>RUN [sorszam]</code>, <code>CONT</code>, <code>NEW</code>, <code>TESTPACK</code></li>
+        <li><code>SAVE "NEV"[ ,eszkoz]</code>, <code>LOAD "NEV"[ ,eszkoz][ ,mod]</code>, <code>VERIFY "NEV"[ ,eszkoz]</code></li>
+        <li><code>OPEN csatorna,eszkoz[,masodlagos][,"parancs"]</code>, <code>CLOSE csatorna</code>, <code>CMD csatorna</code></li>
+        <li><code>PRINT ...</code>, <code>PRINT# csatorna,...</code>, <code>INPUT ...</code>, <code>INPUT# ...</code>, <code>GET ...</code>, <code>GET# ...</code></li>
+        <li><code>IF feltetel THEN ... [ELSE ...]</code>, <code>FOR ... NEXT</code>, <code>ON ... GOTO/GOSUB</code>, <code>GOTO</code>, <code>GOSUB</code>, <code>RETURN</code></li>
+        <li><code>READ</code>, <code>DATA</code>, <code>RESTORE [sorszam]</code>, <code>DIM</code>, <code>DEF FN</code>, <code>LET</code>/<code>A=...</code></li>
+        <li><code>POKE cim,ertek</code>, <code>WAIT cim,maszk[,ertek]</code>, <code>SYS cim[,A][,X][,Y]</code></li>
+        <li><code>GRAPHIC mode[,c][,s]</code> vagy <code>GRAPHIC CLR</code>, <code>SCNCLR [mode]</code></li>
+        <li><code>COLOR szin</code> (legacy) vagy <code>COLOR source,color</code> (C128)</li>
+        <li><code>DRAW [source],x1,y1 [TO x2,y2] ...</code>, <code>BOX [source],x1,y1[,x2,y2][,angle][,paint]</code></li>
+        <li><code>CIRCLE [source],x,y,xr[,yr][,sa][,ea][,angle][,inc]</code>, <code>PAINT [source],x,y[,mode]</code></li>
+        <li><code>PLOT X,Y[,szin]</code>, <code>LINE X1,Y1,X2,Y2[,szin]</code>, <code>RECT X,Y,SZEL,MAG[,szin] [FILL]</code>, <code>CIRCLE X,Y,R[,szin] [FILL]</code> (legacy)</li>
+      </ul>
+
+      <h2>Tesztprogram csomag</h2>
+      <ul>
+        <li>Ird be: <code>TESTPACK</code></li>
+        <li>Ez 11 mintaprogramot telepit localStorage-ba.</li>
+        <li>Programok: <code>TP00-INDEX</code>, <code>TP01-BASIC</code>, <code>TP02-DATA-FN</code>, <code>TP03-FLOW</code>, <code>TP04-DRAW</code>, <code>TP05-BOX-PAINT</code>, <code>TP06-CIRCLE</code>, <code>TP07-SPLIT</code>, <code>TP08-PAINT-MODE</code>, <code>TP09-CHANNEL</code>, <code>TP10-STOP-CONT</code>.</li>
+        <li>Inditas: <code>LOAD "TP00-INDEX",8</code> majd <code>RUN</code>.</li>
+        <li>Direkt futtatas: <code>LOAD "TP04-DRAW",8</code> majd <code>RUN</code>.</li>
+      </ul>
+
+      <h2>C128 grafikai parancsok - emulalt viselkedes</h2>
+      <ul>
+        <li><code>GRAPHIC mode[,c][,s]</code>: <code>mode=0..5</code>, <code>c=0/1</code> (default 1), <code>s=0..25</code> split modhoz.</li>
+        <li><code>GRAPHIC CLR</code>: visszaall text modra es torli a grafikus reteget.</li>
+        <li><code>SCNCLR [mode]</code>: text modban text torles, bitmap modban grafikai torles.</li>
+        <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
+        <li><code>DRAW</code>/<code>BOX</code>/<code>CIRCLE</code>/<code>PAINT</code> eseten a <code>source</code> tartomany <code>0..3</code>.</li>
+        <li><code>CIRCLE</code> eseten javasolt explicit <code>source</code>, mert a legacy <code>CIRCLE X,Y,R[,szin] [FILL]</code> forma is megmaradt.</li>
+        <li><code>BOX</code> esetben ha <code>x2,y2</code> hianyzik, a pixelkurzor aktualis poziciojat hasznalja.</li>
+        <li><code>PAINT mode 0</code>: flood fill; <code>mode 1</code>: hatterszin-terulet kitoltese.</li>
+        <li><code>GRAPHIC 5</code> (80 oszlop) itt mod-jelzes, a text viewport tovabbra is C64-szeru.</li>
+      </ul>
+
+      <h2>Beepitett fuggvenyek</h2>
+      <p>
+        <code>SGN</code>, <code>INT</code>, <code>ABS</code>, <code>USR</code>, <code>FRE</code>, <code>POS</code>, <code>SQR</code>,
+        <code>RND</code>, <code>LOG</code>, <code>EXP</code>, <code>COS</code>, <code>SIN</code>, <code>TAN</code>, <code>ATN</code>,
+        <code>PEEK</code>, <code>LEN</code>, <code>VAL</code>, <code>ASC</code>, <code>STR$</code>, <code>CHR$</code>,
+        <code>LEFT$</code>, <code>RIGHT$</code>, <code>MID$</code>, tovabba <code>TI</code>, <code>TI$</code>, <code>ST</code>.
+      </p>
+
+      <p><a href="./index.html">Vissza a C64 kepernyore</a></p>
+    </main>
+  </body>
+</html>

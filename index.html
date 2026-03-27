@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C64 BASIC Emulator</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="c64-shell">
+      <header class="c64-header">COMMODORE 64</header>
+      <section
+        id="screen"
+        class="c64-screen"
+        tabindex="0"
+        aria-label="Commodore 64 BASIC screen"
+      >
+        <canvas id="gfx" width="320" height="200" aria-hidden="true"></canvas>
+        <pre id="screenText" class="screen-text"></pre>
+      </section>
+      <footer class="hint">
+        Beepitett: READY., sor-szamozott BASIC bevitel, LIST, RUN, NEW, TESTPACK, IF/THEN/ELSE, FOR/NEXT
+        |
+        <button id="viewToggle" type="button" class="hint-button">MAX NEZET</button>
+        |
+        <a class="readme-link" href="./readme.html" target="_blank" rel="noopener">README</a>
+      </footer>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
