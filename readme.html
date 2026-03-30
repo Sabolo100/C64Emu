@@ -10,6 +10,9 @@
         --panel: #4a3cb3;
         --border: #7869d1;
         --text: #d9e0ff;
+        --btn: #5f50d5;
+        --btn-active: #ffffff;
+        --btn-active-text: #2f2370;
       }
       * {
         box-sizing: border-box;
@@ -44,134 +47,505 @@
       .small {
         opacity: 0.85;
       }
+      .lang-switch {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .lang-switch button {
+        border: 2px solid #ffffff;
+        background: var(--btn);
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 14px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      .lang-switch button.active {
+        background: var(--btn-active);
+        color: var(--btn-active-text);
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>C64 BASIC Emulator README</h1>
-      <p class="small">Ez a dokumentum a <code>README.md</code> webes nezetet adja.</p>
+      <div class="lang-switch">
+        <button type="button" data-lang-btn="hu" class="active">Magyar</button>
+        <button type="button" data-lang-btn="en">English</button>
+      </div>
 
-      <h2>Alap hasznalat</h2>
-      <ul>
-        <li>Sorszamozott programsor: <code>10 PRINT "HELLO"</code></li>
-        <li>Sor torlese: <code>10</code></li>
-        <li>Listazas: <code>LIST</code> vagy <code>LIST 100-300</code></li>
-        <li>Futtatas: <code>RUN</code> vagy <code>RUN 100</code></li>
-        <li>Folytatas STOP/BREAK utan: <code>CONT</code></li>
-        <li>Uj program: <code>NEW</code></li>
-      </ul>
+      <section data-lang-content="hu">
+        <h1>C64 BASIC Emulator README</h1>
+        <p class="small">Ez a dokumentum a <code>README.md</code> webes nezetet adja.</p>
 
-      <h2>Programozasi mod</h2>
-      <ul>
-        <li>A sorszammal kezdo sorok csak mentesre kerulnek, nem futnak le Enterre.</li>
-        <li>A kod futtatasa kulon <code>RUN</code> paranccsal tortenik.</li>
-        <li><code>SHIFT+ENTER</code> automatikusan felajanlja a kovetkezo sorszamot (+10).</li>
-        <li>A kepernyotartalom + program allapot automatikusan mentodik <code>localStorage</code>-ba, igy README utan visszaall.</li>
-      </ul>
+        <h2>Alap hasznalat</h2>
+        <ul>
+          <li>Sorszamozott programsor: <code>10 PRINT "HELLO"</code></li>
+          <li>Sor torlese: <code>10</code></li>
+          <li>Listazas: <code>LIST</code> vagy <code>LIST 100-300</code></li>
+          <li>Futtatas: <code>RUN</code> vagy <code>RUN 100</code></li>
+          <li>Folytatas STOP/BREAK utan: <code>CONT</code></li>
+          <li>Uj program: <code>NEW</code></li>
+        </ul>
 
-      <h2>Kepernyo mozgas</h2>
-      <ul>
-        <li><code>ArrowUp</code> / <code>ArrowDown</code>: programsorok kozti lepkedes szerkeszteshez.</li>
-        <li>Ha a legutolso programsoron vagy, <code>ArrowDown</code> visszavisz az also parancssorra.</li>
-        <li><code>LIST</code> utan egy sorszamozott sorra kattintva szerkesztesre betolt.</li>
-        <li>Programsor-szerkesztes kozben, ha nem programsorra kattintasz, visszalep a parancssorra.</li>
-        <li>Szerkesztes Enterre helyben frissul, nincs kulon duplikalt uj sor.</li>
-        <li><code>Alt+ArrowUp</code> / <code>Alt+ArrowDown</code>: scroll a kepernyobufferben.</li>
-        <li><code>PageUp</code> / <code>PageDown</code>: gyorsabb scroll.</li>
-        <li>Eger gorgetes is mukodik a kepernyon.</li>
-      </ul>
+        <h2>Programozasi mod</h2>
+        <ul>
+          <li>A sorszammal kezdo sorok csak mentesre kerulnek, nem futnak le Enterre.</li>
+          <li>A kod futtatasa kulon <code>RUN</code> paranccsal tortenik.</li>
+          <li><code>SHIFT+ENTER</code> automatikusan felajanlja a kovetkezo sorszamot (+10).</li>
+          <li>
+            A kepernyotartalom + program allapot automatikusan mentodik <code>localStorage</code>-ba, igy README utan
+            visszaall.
+          </li>
+        </ul>
 
-      <h2>Nezet valtas</h2>
-      <ul>
-        <li><code>MAX NEZET</code>: nagyobb befoglalo terulet, valtozatlan font meret.</li>
-        <li><code>NORMAL NEZET</code>: visszavalt az alap meretre.</li>
-        <li>Gyorsbillentyu: <code>F9</code>.</li>
-      </ul>
+        <h2>Kepernyo mozgas</h2>
+        <ul>
+          <li><code>ArrowUp</code> / <code>ArrowDown</code>: programsorok kozti lepkedes szerkeszteshez.</li>
+          <li>Ha a legutolso programsoron vagy, <code>ArrowDown</code> visszavisz az also parancssorra.</li>
+          <li><code>LIST</code> utan egy sorszamozott sorra kattintva szerkesztesre betolt.</li>
+          <li>Programsor-szerkesztes kozben, ha nem programsorra kattintasz, visszalep a parancssorra.</li>
+          <li>Szerkesztes Enterre helyben frissul, nincs kulon duplikalt uj sor.</li>
+          <li><code>Alt+ArrowUp</code> / <code>Alt+ArrowDown</code>: scroll a kepernyobufferben.</li>
+          <li><code>PageUp</code> / <code>PageDown</code>: gyorsabb scroll.</li>
+          <li>Eger gorgetes is mukodik a kepernyon.</li>
+        </ul>
 
-      <h2>Publikus deploy (Vercel)</h2>
-      <ul>
-        <li>Tedd fel ezt a projektet GitHub repositoryba.</li>
-        <li>Vercelben: <code>Add New Project</code>, majd importald a repositoryt.</li>
-        <li>Ha nem repository gyokerben van a projekt, <code>Root Directory</code>: <code>ChatGPT Codex/C64 Emulator</code>.</li>
-        <li>Framework: <code>Other</code>, build command nem szukseges.</li>
-        <li>A gyoker URL automatikusan az <code>index.html</code>-re mutat a <code>vercel.json</code> miatt.</li>
-      </ul>
+        <h2>Nezet valtas</h2>
+        <ul>
+          <li><code>MAX NEZET</code>: nagyobb befoglalo terulet, valtozatlan font meret.</li>
+          <li><code>NORMAL NEZET</code>: visszavalt az alap meretre.</li>
+          <li>Gyorsbillentyu: <code>F9</code>.</li>
+        </ul>
 
-      <h2>Tarolas (lokalis)</h2>
-      <ul>
-        <li><code>SAVE "PROG",8</code>: program mentese <code>localStorage</code>-ba.</li>
-        <li><code>LOAD "PROG",8</code>: program betoltese.</li>
-        <li><code>LOAD "*",8,1</code>: utolso mentett program betoltese.</li>
-        <li><code>VERIFY "PROG",8</code>: program osszevetese a mentettel.</li>
-      </ul>
+        <h2>Publikus deploy (Vercel)</h2>
+        <ul>
+          <li>Tedd fel ezt a projektet GitHub repositoryba.</li>
+          <li>Vercelben: <code>Add New Project</code>, majd importald a repositoryt.</li>
+          <li>
+            Ha nem repository gyokerben van a projekt, <code>Root Directory</code>:
+            <code>ChatGPT Codex/C64 Emulator</code>.
+          </li>
+          <li>Framework: <code>Other</code>, build command nem szukseges.</li>
+          <li>A gyoker URL automatikusan az <code>index.html</code>-re mutat a <code>vercel.json</code> miatt.</li>
+        </ul>
 
-      <h2>Tamogatott BASIC elemek</h2>
-      <ul>
-        <li>Programkezeles: <code>LIST</code>, <code>RUN</code>, <code>NEW</code>, <code>CONT</code>, <code>TESTPACK</code></li>
-        <li>I/O es csatorna: <code>OPEN</code>, <code>CLOSE</code>, <code>CMD</code>, <code>PRINT#</code>, <code>INPUT#</code>, <code>GET#</code></li>
-        <li>Vezerles: <code>IF THEN ELSE</code>, <code>GOTO</code>, <code>GOSUB/RETURN</code>, <code>ON ... GOTO/GOSUB</code>, <code>FOR/NEXT</code>, <code>STOP</code>, <code>END</code></li>
-        <li>Adatkezeles: <code>DATA</code>, <code>READ</code>, <code>RESTORE</code>, <code>DIM</code>, <code>DEF FN</code>, <code>LET</code>, <code>CLR</code></li>
-        <li>Rendszer: <code>POKE</code>, <code>WAIT</code>, <code>GET</code>, <code>SYS</code></li>
-        <li>Grafika (C128 stilus is): <code>GRAPHIC</code>, <code>SCNCLR</code>, <code>COLOR</code>, <code>DRAW</code>, <code>BOX</code>, <code>CIRCLE</code>, <code>PAINT</code>, valamint <code>PLOT</code>, <code>LINE</code>, <code>RECT</code>, <code>CLSG</code></li>
-        <li>AI: footer <code>AI</code> gomb feladatbol BASIC program generalasra.</li>
-      </ul>
+        <h2>AI local inditas (3131)</h2>
+        <ul>
+          <li>Futtasd: <code>./start-vercel.sh</code></li>
+          <li>Ez fixen a <code>3131</code> portra inditja a Vercel dev servert.</li>
+          <li>Nyisd meg: <code>http://localhost:3131</code></li>
+        </ul>
 
-      <h2>AI BASIC generator</h2>
-      <ul>
-        <li>Kattints az also <code>AI</code> gombra.</li>
-        <li>Promptban add meg a feladatot (pl. amoba jatek BASIC-ben).</li>
-        <li>A program automatikusan bekerul az editorba es mentodik <code>AI-...</code> nevvel.</li>
-        <li>Ha nincs API kulcs a deployban, a gomb <code>AI OFF</code> es inaktiv.</li>
-        <li>Vercel env: <code>OPENAI_API_KEY</code> (kotelezo), <code>OPENAI_MODEL</code> (opcionalis).</li>
-      </ul>
+        <h2>Tarolas (lokalis)</h2>
+        <ul>
+          <li><code>SAVE "PROG",8</code>: program mentese <code>localStorage</code>-ba.</li>
+          <li><code>LOAD "PROG",8</code>: program betoltese.</li>
+          <li><code>LOAD "*",8,1</code>: utolso mentett program betoltese.</li>
+          <li><code>VERIFY "PROG",8</code>: program osszevetese a mentettel.</li>
+        </ul>
 
-      <h2>Szintaxis referencia</h2>
-      <ul>
-        <li><code>LIST [kezdo[-zaro]]</code>, <code>RUN [sorszam]</code>, <code>CONT</code>, <code>NEW</code>, <code>TESTPACK</code></li>
-        <li><code>SAVE "NEV"[ ,eszkoz]</code>, <code>LOAD "NEV"[ ,eszkoz][ ,mod]</code>, <code>VERIFY "NEV"[ ,eszkoz]</code></li>
-        <li><code>OPEN csatorna,eszkoz[,masodlagos][,"parancs"]</code>, <code>CLOSE csatorna</code>, <code>CMD csatorna</code></li>
-        <li><code>PRINT ...</code>, <code>PRINT# csatorna,...</code>, <code>INPUT ...</code>, <code>INPUT# ...</code>, <code>GET ...</code>, <code>GET# ...</code></li>
-        <li><code>IF feltetel THEN ... [ELSE ...]</code>, <code>FOR ... NEXT</code>, <code>ON ... GOTO/GOSUB</code>, <code>GOTO</code>, <code>GOSUB</code>, <code>RETURN</code></li>
-        <li><code>READ</code>, <code>DATA</code>, <code>RESTORE [sorszam]</code>, <code>DIM</code>, <code>DEF FN</code>, <code>LET</code>/<code>A=...</code></li>
-        <li><code>POKE cim,ertek</code>, <code>WAIT cim,maszk[,ertek]</code>, <code>SYS cim[,A][,X][,Y]</code></li>
-        <li><code>GRAPHIC mode[,c][,s]</code> vagy <code>GRAPHIC CLR</code>, <code>SCNCLR [mode]</code></li>
-        <li><code>COLOR szin</code> (legacy) vagy <code>COLOR source,color</code> (C128)</li>
-        <li><code>DRAW [source],x1,y1 [TO x2,y2] ...</code>, <code>BOX [source],x1,y1[,x2,y2][,angle][,paint]</code></li>
-        <li><code>CIRCLE [source],x,y,xr[,yr][,sa][,ea][,angle][,inc]</code>, <code>PAINT [source],x,y[,mode]</code></li>
-        <li><code>PLOT X,Y[,szin]</code>, <code>LINE X1,Y1,X2,Y2[,szin]</code>, <code>RECT X,Y,SZEL,MAG[,szin] [FILL]</code>, <code>CIRCLE X,Y,R[,szin] [FILL]</code> (legacy)</li>
-      </ul>
+        <h2>Tamogatott BASIC elemek</h2>
+        <ul>
+          <li>
+            Programkezeles: <code>LIST</code>, <code>RUN</code>, <code>NEW</code>, <code>CONT</code>, <code>HELP</code>,
+            <code>TESTPACK</code>
+          </li>
+          <li>
+            I/O es csatorna: <code>OPEN</code>, <code>CLOSE</code>, <code>CMD</code>, <code>PRINT#</code>,
+            <code>INPUT#</code>, <code>GET#</code>
+          </li>
+          <li>
+            Vezerles: <code>IF THEN ELSE</code>, <code>GOTO</code>, <code>GOSUB/RETURN</code>,
+            <code>ON ... GOTO/GOSUB</code>, <code>FOR/NEXT</code>, <code>STOP</code>, <code>END</code>
+          </li>
+          <li>
+            Adatkezeles: <code>DATA</code>, <code>READ</code>, <code>RESTORE</code>, <code>DIM</code>, <code>DEF FN</code>,
+            <code>LET</code>, <code>CLR</code>
+          </li>
+          <li>Rendszer: <code>POKE</code>, <code>WAIT</code>, <code>GET</code>, <code>SYS</code></li>
+          <li>
+            Grafika (C128 stilus is): <code>GRAPHIC</code>, <code>SCNCLR</code>, <code>COLOR</code>, <code>DRAW</code>,
+            <code>BOX</code>, <code>CIRCLE</code>, <code>PAINT</code>, valamint <code>PLOT</code>, <code>LINE</code>,
+            <code>RECT</code>, <code>CLSG</code>
+          </li>
+          <li>Kepernyotorles: <code>CLS</code> (text), <code>CLSG</code> (grafika)</li>
+          <li>AI: footer <code>AI</code> gomb feladatbol BASIC program generalasra.</li>
+        </ul>
 
-      <h2>Tesztprogram csomag</h2>
-      <ul>
-        <li>Ird be: <code>TESTPACK</code></li>
-        <li>Ez 11 mintaprogramot telepit localStorage-ba.</li>
-        <li>Programok: <code>TP00-INDEX</code>, <code>TP01-BASIC</code>, <code>TP02-DATA-FN</code>, <code>TP03-FLOW</code>, <code>TP04-DRAW</code>, <code>TP05-BOX-PAINT</code>, <code>TP06-CIRCLE</code>, <code>TP07-SPLIT</code>, <code>TP08-PAINT-MODE</code>, <code>TP09-CHANNEL</code>, <code>TP10-STOP-CONT</code>.</li>
-        <li>Inditas: <code>LOAD "TP00-INDEX",8</code> majd <code>RUN</code>.</li>
-        <li>Direkt futtatas: <code>LOAD "TP04-DRAW",8</code> majd <code>RUN</code>.</li>
-      </ul>
+        <h2>AI BASIC generator</h2>
+        <ul>
+          <li>Kattints az also <code>AI</code> gombra.</li>
+          <li>Promptban add meg a feladatot (pl. amoba jatek BASIC-ben).</li>
+          <li>A program automatikusan bekerul az editorba es mentodik <code>AI-...</code> nevvel.</li>
+          <li>Ha nincs API kulcs a deployban, a gomb <code>AI OFF</code> es inaktiv.</li>
+          <li>Az AI backend csak tamogatott parancsokat fogad el; ismeretlen statementet elutasit.</li>
+          <li>Az AI prompt parancslistaja backend whitelistbol epul, majd kulon statement-validacio fut a generalt sorokra.</li>
+          <li>Vercel env: <code>OPENAI_API_KEY</code> (kotelezo), <code>OPENAI_MODEL</code> (opcionalis).</li>
+        </ul>
 
-      <h2>C128 grafikai parancsok - emulalt viselkedes</h2>
-      <ul>
-        <li><code>GRAPHIC mode[,c][,s]</code>: <code>mode=0..5</code>, <code>c=0/1</code> (default 1), <code>s=0..25</code> split modhoz.</li>
-        <li><code>GRAPHIC CLR</code>: visszaall text modra es torli a grafikus reteget.</li>
-        <li><code>SCNCLR [mode]</code>: text modban text torles, bitmap modban grafikai torles.</li>
-        <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
-        <li><code>DRAW</code>/<code>BOX</code>/<code>CIRCLE</code>/<code>PAINT</code> eseten a <code>source</code> tartomany <code>0..3</code>.</li>
-        <li><code>CIRCLE</code> eseten javasolt explicit <code>source</code>, mert a legacy <code>CIRCLE X,Y,R[,szin] [FILL]</code> forma is megmaradt.</li>
-        <li><code>BOX</code> esetben ha <code>x2,y2</code> hianyzik, a pixelkurzor aktualis poziciojat hasznalja.</li>
-        <li><code>PAINT mode 0</code>: flood fill; <code>mode 1</code>: hatterszin-terulet kitoltese.</li>
-        <li><code>GRAPHIC 5</code> (80 oszlop) itt mod-jelzes, a text viewport tovabbra is C64-szeru.</li>
-      </ul>
+        <h2>Szintaxis referencia</h2>
+        <ul>
+          <li>
+            <code>LIST [kezdo[-zaro]]</code>, <code>RUN [sorszam]</code>, <code>CONT</code>, <code>NEW</code>,
+            <code>HELP</code>, <code>TESTPACK</code>
+          </li>
+          <li>
+            <code>SAVE "NEV"[ ,eszkoz]</code>, <code>LOAD "NEV"[ ,eszkoz][ ,mod]</code>,
+            <code>VERIFY "NEV"[ ,eszkoz]</code>
+          </li>
+          <li>
+            <code>OPEN csatorna,eszkoz[,masodlagos][,"parancs"]</code>, <code>CLOSE csatorna</code>,
+            <code>CMD [csatorna]</code>
+          </li>
+          <li>
+            <code>PRINT ...</code>, <code>PRINT# csatorna,...</code>, <code>INPUT ...</code>, <code>INPUT# ...</code>,
+            <code>GET ...</code>, <code>GET# ...</code>
+          </li>
+          <li>
+            <code>IF feltetel THEN ... [ELSE ...]</code>, <code>FOR ... NEXT</code>, <code>ON ... GOTO/GOSUB</code>,
+            <code>GOTO</code>, <code>GOSUB</code>, <code>RETURN</code>
+          </li>
+          <li>
+            <code>READ</code>, <code>DATA</code>, <code>RESTORE [sorszam]</code>, <code>DIM</code>, <code>DEF FN</code>,
+            <code>LET</code>/<code>A=...</code>
+          </li>
+          <li>
+            <code>POKE cim,ertek</code>, <code>WAIT cim,maszk[,ertek]</code>, <code>SYS cim[,A][,X][,Y]</code>,
+            <code>CLS</code>, <code>CLSG</code>
+          </li>
+          <li><code>GRAPHIC mode[,c][,s]</code> vagy <code>GRAPHIC CLR</code>, <code>SCNCLR [mode]</code></li>
+          <li><code>COLOR szin</code> (legacy) vagy <code>COLOR source,color</code> (C128)</li>
+          <li>
+            <code>DRAW [source],x1,y1 [TO x2,y2] ...</code>,
+            <code>BOX [source],x1,y1[,x2,y2][,angle][,paint]</code>
+          </li>
+          <li><code>CIRCLE [source],x,y,xr[,yr][,sa][,ea][,angle][,inc]</code>, <code>PAINT [source],x,y[,mode]</code></li>
+          <li>
+            <code>PLOT X,Y[,szin]</code>, <code>LINE X1,Y1,X2,Y2[,szin]</code>,
+            <code>RECT X,Y,SZEL,MAG[,szin] [FILL]</code>, <code>CIRCLE X,Y,R[,szin] [FILL]</code> (legacy)
+          </li>
+        </ul>
 
-      <h2>Beepitett fuggvenyek</h2>
-      <p>
-        <code>SGN</code>, <code>INT</code>, <code>ABS</code>, <code>USR</code>, <code>FRE</code>, <code>POS</code>, <code>SQR</code>,
-        <code>RND</code>, <code>LOG</code>, <code>EXP</code>, <code>COS</code>, <code>SIN</code>, <code>TAN</code>, <code>ATN</code>,
-        <code>PEEK</code>, <code>LEN</code>, <code>VAL</code>, <code>ASC</code>, <code>STR$</code>, <code>CHR$</code>,
-        <code>LEFT$</code>, <code>RIGHT$</code>, <code>MID$</code>, tovabba <code>TI</code>, <code>TI$</code>, <code>ST</code>.
-      </p>
+        <h2>Parancs ellenorzes</h2>
+        <ul>
+          <li>A lista az emulator parseren (<code>executeImmediate</code> + <code>executeStatement</code>) lett ellenorizve.</li>
+          <li>Kulon vannak azonnali parancsok (pl. <code>LIST</code>, <code>RUN</code>) es programsor-utasitasok.</li>
+        </ul>
 
-      <p><a href="./index.html">Vissza a C64 kepernyore</a></p>
+        <h2>Parameter formatumok</h2>
+        <ul>
+          <li>Valtozonev: numerikus (<code>A</code>, <code>I1</code>) vagy sztring (<code>N$</code>).</li>
+          <li>Tomb: <code>DIM A(10)</code>, <code>DIM M(5,5)</code>, indexeles: <code>A(I)</code>, <code>M(I,J)</code>.</li>
+          <li><code>DIM</code> merethatar inclusive: <code>DIM A(10)</code> -> <code>0..10</code>.</li>
+          <li><code>IF</code>: <code>IF feltetel THEN utasitas|sorszam [ELSE ...]</code>.</li>
+          <li><code>OPEN</code>: <code>OPEN csatorna,eszkoz[,masodlagos][,&quot;parancs&quot;]</code>.</li>
+          <li><code>CMD [csatorna]</code>: csatornara iranyitas, argumentum nelkul vissza alap kimenetre.</li>
+          <li><code>FOR</code>: <code>FOR V=kezdo TO veg [STEP lepes]</code>, <code>NEXT [V]</code>.</li>
+          <li><code>GRAPHIC</code>: <code>mode=0..5</code>, <code>c=0/1</code>, <code>s=0..25</code>.</li>
+          <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
+        </ul>
+
+        <h2>Tesztprogram csomag</h2>
+        <ul>
+          <li>Ird be: <code>TESTPACK</code></li>
+          <li>Ez 11 mintaprogramot telepit localStorage-ba.</li>
+          <li>
+            Programok: <code>TP00-INDEX</code>, <code>TP01-BASIC</code>, <code>TP02-DATA-FN</code>, <code>TP03-FLOW</code>,
+            <code>TP04-DRAW</code>, <code>TP05-BOX-PAINT</code>, <code>TP06-CIRCLE</code>, <code>TP07-SPLIT</code>,
+            <code>TP08-PAINT-MODE</code>, <code>TP09-CHANNEL</code>, <code>TP10-STOP-CONT</code>.
+          </li>
+          <li>Inditas: <code>LOAD "TP00-INDEX",8</code> majd <code>RUN</code>.</li>
+          <li>Direkt futtatas: <code>LOAD "TP04-DRAW",8</code> majd <code>RUN</code>.</li>
+        </ul>
+
+        <h2>C128 grafikai parancsok - emulalt viselkedes</h2>
+        <ul>
+          <li>
+            <code>GRAPHIC mode[,c][,s]</code>: <code>mode=0..5</code>, <code>c=0/1</code> (default 1), <code>s=0..25</code>
+            split modhoz.
+          </li>
+          <li><code>GRAPHIC CLR</code>: visszaall text modra es torli a grafikus reteget.</li>
+          <li><code>SCNCLR [mode]</code>: text modban text torles, bitmap modban grafikai torles.</li>
+          <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
+          <li>
+            <code>DRAW</code>/<code>BOX</code>/<code>CIRCLE</code>/<code>PAINT</code> eseten a <code>source</code> tartomany
+            <code>0..3</code>.
+          </li>
+          <li>
+            <code>CIRCLE</code> eseten javasolt explicit <code>source</code>, mert a legacy
+            <code>CIRCLE X,Y,R[,szin] [FILL]</code> forma is megmaradt.
+          </li>
+          <li>
+            <code>BOX</code> esetben ha <code>x2,y2</code> hianyzik, a pixelkurzor aktualis poziciojat hasznalja.
+          </li>
+          <li><code>PAINT mode 0</code>: flood fill; <code>mode 1</code>: hatterszin-terulet kitoltese.</li>
+          <li><code>GRAPHIC 5</code> (80 oszlop) itt mod-jelzes, a text viewport tovabbra is C64-szeru.</li>
+        </ul>
+
+        <h2>Beepitett fuggvenyek</h2>
+        <p>
+          <code>SGN</code>, <code>INT</code>, <code>ABS</code>, <code>USR</code>, <code>FRE</code>, <code>POS</code>,
+          <code>SQR</code>, <code>RND</code>, <code>LOG</code>, <code>EXP</code>, <code>COS</code>, <code>SIN</code>,
+          <code>TAN</code>, <code>ATN</code>, <code>PEEK</code>, <code>LEN</code>, <code>VAL</code>, <code>ASC</code>,
+          <code>STR$</code>, <code>CHR$</code>, <code>LEFT$</code>, <code>RIGHT$</code>, <code>MID$</code>, tovabba
+          <code>TI</code>, <code>TI$</code>, <code>ST</code>.
+        </p>
+
+        <p><a href="./index.html">Vissza a C64 kepernyore</a></p>
+      </section>
+
+      <section data-lang-content="en" hidden>
+        <h1>C64 BASIC Emulator README</h1>
+        <p class="small">This document is the web view of <code>README.md</code>.</p>
+
+        <h2>Basic usage</h2>
+        <ul>
+          <li>Line-numbered program line: <code>10 PRINT "HELLO"</code></li>
+          <li>Delete a line: <code>10</code></li>
+          <li>List program: <code>LIST</code> or <code>LIST 100-300</code></li>
+          <li>Run: <code>RUN</code> or <code>RUN 100</code></li>
+          <li>Continue after STOP/BREAK: <code>CONT</code></li>
+          <li>New program: <code>NEW</code></li>
+        </ul>
+
+        <h2>Programming mode</h2>
+        <ul>
+          <li>Line-numbered input lines are saved only; they are not executed on Enter.</li>
+          <li>Code execution happens only with a separate <code>RUN</code> command.</li>
+          <li><code>SHIFT+ENTER</code> auto-prefills the next line number (+10).</li>
+          <li>Screen content and program state are auto-saved to <code>localStorage</code>, so opening README does not lose state.</li>
+        </ul>
+
+        <h2>Screen navigation</h2>
+        <ul>
+          <li><code>ArrowUp</code> / <code>ArrowDown</code>: move between program lines for editing.</li>
+          <li>If you are on the last program line, <code>ArrowDown</code> moves back to the bottom command line.</li>
+          <li>After <code>LIST</code>, clicking a numbered line loads it into the editor.</li>
+          <li>During program-line editing, clicking outside a program line returns to command line mode.</li>
+          <li>Pressing Enter updates edited lines in place, without duplicate display lines.</li>
+          <li><code>Alt+ArrowUp</code> / <code>Alt+ArrowDown</code>: scroll in the screen buffer.</li>
+          <li><code>PageUp</code> / <code>PageDown</code>: faster scroll.</li>
+          <li>Mouse wheel scrolling also works on the screen.</li>
+        </ul>
+
+        <h2>View toggle</h2>
+        <ul>
+          <li><code>MAX VIEW</code>: bigger container area with unchanged font size.</li>
+          <li><code>NORMAL VIEW</code>: switches back to default size.</li>
+          <li>Hotkey: <code>F9</code>.</li>
+        </ul>
+
+        <h2>Public deploy (Vercel)</h2>
+        <ul>
+          <li>Push this project to a GitHub repository.</li>
+          <li>In Vercel: <code>Add New Project</code>, then import the repository.</li>
+          <li>If the project is not in repo root, set <code>Root Directory</code> to <code>ChatGPT Codex/C64 Emulator</code>.</li>
+          <li>Framework: <code>Other</code>, no build command required.</li>
+          <li>Root URL is automatically routed to <code>index.html</code> via <code>vercel.json</code>.</li>
+        </ul>
+
+        <h2>AI local start (3131)</h2>
+        <ul>
+          <li>Run: <code>./start-vercel.sh</code></li>
+          <li>It starts Vercel dev on fixed port <code>3131</code>.</li>
+          <li>Open: <code>http://localhost:3131</code></li>
+        </ul>
+
+        <h2>Storage (local)</h2>
+        <ul>
+          <li><code>SAVE "PROG",8</code>: save program to <code>localStorage</code>.</li>
+          <li><code>LOAD "PROG",8</code>: load program.</li>
+          <li><code>LOAD "*",8,1</code>: load last saved program.</li>
+          <li><code>VERIFY "PROG",8</code>: compare current program with saved one.</li>
+        </ul>
+
+        <h2>Supported BASIC features</h2>
+        <ul>
+          <li>
+            Program control: <code>LIST</code>, <code>RUN</code>, <code>NEW</code>, <code>CONT</code>, <code>HELP</code>,
+            <code>TESTPACK</code>
+          </li>
+          <li>
+            I/O and channels: <code>OPEN</code>, <code>CLOSE</code>, <code>CMD</code>, <code>PRINT#</code>,
+            <code>INPUT#</code>, <code>GET#</code>
+          </li>
+          <li>
+            Flow control: <code>IF THEN ELSE</code>, <code>GOTO</code>, <code>GOSUB/RETURN</code>,
+            <code>ON ... GOTO/GOSUB</code>, <code>FOR/NEXT</code>, <code>STOP</code>, <code>END</code>
+          </li>
+          <li>
+            Data handling: <code>DATA</code>, <code>READ</code>, <code>RESTORE</code>, <code>DIM</code>, <code>DEF FN</code>,
+            <code>LET</code>, <code>CLR</code>
+          </li>
+          <li>System: <code>POKE</code>, <code>WAIT</code>, <code>GET</code>, <code>SYS</code></li>
+          <li>
+            Graphics (C128-style too): <code>GRAPHIC</code>, <code>SCNCLR</code>, <code>COLOR</code>, <code>DRAW</code>,
+            <code>BOX</code>, <code>CIRCLE</code>, <code>PAINT</code>, plus <code>PLOT</code>, <code>LINE</code>,
+            <code>RECT</code>, <code>CLSG</code>
+          </li>
+          <li>Screen clear: <code>CLS</code> (text), <code>CLSG</code> (graphics)</li>
+          <li>AI: footer <code>AI</code> button generates BASIC programs from prompts.</li>
+        </ul>
+
+        <h2>AI BASIC generator</h2>
+        <ul>
+          <li>Click the bottom <code>AI</code> button.</li>
+          <li>Enter your task in the prompt (example: make a Gomoku game in BASIC).</li>
+          <li>The generated program is inserted into the editor and auto-saved as <code>AI-...</code>.</li>
+          <li>If no API key is configured on deploy, the button shows <code>AI OFF</code> and is inactive.</li>
+          <li>The AI backend accepts only supported commands; unknown statements are rejected.</li>
+          <li>The AI prompt command list is built from backend whitelist, with extra statement validation on output.</li>
+          <li>Vercel env: <code>OPENAI_API_KEY</code> (required), <code>OPENAI_MODEL</code> (optional).</li>
+        </ul>
+
+        <h2>Syntax reference</h2>
+        <ul>
+          <li>
+            <code>LIST [start[-end]]</code>, <code>RUN [line]</code>, <code>CONT</code>, <code>NEW</code>, <code>HELP</code>,
+            <code>TESTPACK</code>
+          </li>
+          <li>
+            <code>SAVE "NAME"[ ,device]</code>, <code>LOAD "NAME"[ ,device][ ,mode]</code>,
+            <code>VERIFY "NAME"[ ,device]</code>
+          </li>
+          <li>
+            <code>OPEN channel,device[,secondary][,"command"]</code>, <code>CLOSE channel</code>,
+            <code>CMD [channel]</code>
+          </li>
+          <li>
+            <code>PRINT ...</code>, <code>PRINT# channel,...</code>, <code>INPUT ...</code>, <code>INPUT# ...</code>,
+            <code>GET ...</code>, <code>GET# ...</code>
+          </li>
+          <li>
+            <code>IF condition THEN ... [ELSE ...]</code>, <code>FOR ... NEXT</code>, <code>ON ... GOTO/GOSUB</code>,
+            <code>GOTO</code>, <code>GOSUB</code>, <code>RETURN</code>
+          </li>
+          <li>
+            <code>READ</code>, <code>DATA</code>, <code>RESTORE [line]</code>, <code>DIM</code>, <code>DEF FN</code>,
+            <code>LET</code>/<code>A=...</code>
+          </li>
+          <li>
+            <code>POKE address,value</code>, <code>WAIT address,mask[,value]</code>, <code>SYS addr[,A][,X][,Y]</code>,
+            <code>CLS</code>, <code>CLSG</code>
+          </li>
+          <li><code>GRAPHIC mode[,c][,s]</code> or <code>GRAPHIC CLR</code>, <code>SCNCLR [mode]</code></li>
+          <li><code>COLOR color</code> (legacy) or <code>COLOR source,color</code> (C128)</li>
+          <li>
+            <code>DRAW [source],x1,y1 [TO x2,y2] ...</code>,
+            <code>BOX [source],x1,y1[,x2,y2][,angle][,paint]</code>
+          </li>
+          <li><code>CIRCLE [source],x,y,xr[,yr][,sa][,ea][,angle][,inc]</code>, <code>PAINT [source],x,y[,mode]</code></li>
+          <li>
+            <code>PLOT X,Y[,color]</code>, <code>LINE X1,Y1,X2,Y2[,color]</code>,
+            <code>RECT X,Y,W,H[,color] [FILL]</code>, <code>CIRCLE X,Y,R[,color] [FILL]</code> (legacy)
+          </li>
+        </ul>
+
+        <h2>Command validation</h2>
+        <ul>
+          <li>The list was verified against emulator parser paths (<code>executeImmediate</code> + <code>executeStatement</code>).</li>
+          <li>Immediate commands (like <code>LIST</code>, <code>RUN</code>) are separate from program-line statements.</li>
+        </ul>
+
+        <h2>Parameter formats</h2>
+        <ul>
+          <li>Variable names: numeric (<code>A</code>, <code>I1</code>) or string (<code>N$</code>).</li>
+          <li>Arrays: <code>DIM A(10)</code>, <code>DIM M(5,5)</code>; indexing: <code>A(I)</code>, <code>M(I,J)</code>.</li>
+          <li><code>DIM</code> bounds are inclusive: <code>DIM A(10)</code> -> <code>0..10</code>.</li>
+          <li><code>IF</code>: <code>IF condition THEN statement|line [ELSE ...]</code>.</li>
+          <li><code>OPEN</code>: <code>OPEN channel,device[,secondary][,&quot;command&quot;]</code>.</li>
+          <li><code>CMD [channel]</code>: redirect output to channel; with no argument it returns to default output.</li>
+          <li><code>FOR</code>: <code>FOR V=start TO end [STEP step]</code>, <code>NEXT [V]</code>.</li>
+          <li><code>GRAPHIC</code>: <code>mode=0..5</code>, <code>c=0/1</code>, <code>s=0..25</code>.</li>
+          <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
+        </ul>
+
+        <h2>Test program pack</h2>
+        <ul>
+          <li>Type: <code>TESTPACK</code></li>
+          <li>It installs 11 demo programs into localStorage.</li>
+          <li>
+            Programs: <code>TP00-INDEX</code>, <code>TP01-BASIC</code>, <code>TP02-DATA-FN</code>, <code>TP03-FLOW</code>,
+            <code>TP04-DRAW</code>, <code>TP05-BOX-PAINT</code>, <code>TP06-CIRCLE</code>, <code>TP07-SPLIT</code>,
+            <code>TP08-PAINT-MODE</code>, <code>TP09-CHANNEL</code>, <code>TP10-STOP-CONT</code>.
+          </li>
+          <li>Start: <code>LOAD "TP00-INDEX",8</code> then <code>RUN</code>.</li>
+          <li>Direct run: <code>LOAD "TP04-DRAW",8</code> then <code>RUN</code>.</li>
+        </ul>
+
+        <h2>C128 graphics commands - emulated behavior</h2>
+        <ul>
+          <li>
+            <code>GRAPHIC mode[,c][,s]</code>: <code>mode=0..5</code>, <code>c=0/1</code> (default 1), <code>s=0..25</code>
+            for split mode.
+          </li>
+          <li><code>GRAPHIC CLR</code>: returns to text mode and clears graphics layer.</li>
+          <li><code>SCNCLR [mode]</code>: clears text in text mode, clears graphics in bitmap modes.</li>
+          <li><code>COLOR source,color</code>: <code>source=0..6</code>, <code>color=1..16</code>.</li>
+          <li><code>DRAW</code>/<code>BOX</code>/<code>CIRCLE</code>/<code>PAINT</code> use source range <code>0..3</code>.</li>
+          <li>
+            For <code>CIRCLE</code>, explicit <code>source</code> is recommended because legacy
+            <code>CIRCLE X,Y,R[,color] [FILL]</code> is also supported.
+          </li>
+          <li>If <code>x2,y2</code> is missing in <code>BOX</code>, current pixel cursor position is used.</li>
+          <li><code>PAINT mode 0</code>: flood fill; <code>mode 1</code>: background-area fill mode.</li>
+          <li><code>GRAPHIC 5</code> (80 columns) is mode signaling here; text viewport remains C64-style.</li>
+        </ul>
+
+        <h2>Built-in functions</h2>
+        <p>
+          <code>SGN</code>, <code>INT</code>, <code>ABS</code>, <code>USR</code>, <code>FRE</code>, <code>POS</code>,
+          <code>SQR</code>, <code>RND</code>, <code>LOG</code>, <code>EXP</code>, <code>COS</code>, <code>SIN</code>,
+          <code>TAN</code>, <code>ATN</code>, <code>PEEK</code>, <code>LEN</code>, <code>VAL</code>, <code>ASC</code>,
+          <code>STR$</code>, <code>CHR$</code>, <code>LEFT$</code>, <code>RIGHT$</code>, <code>MID$</code>, plus
+          <code>TI</code>, <code>TI$</code>, <code>ST</code>.
+        </p>
+
+        <p><a href="./index.html">Back to C64 screen</a></p>
+      </section>
     </main>
+
+    <script>
+      (function () {
+        const key = "c64_readme_lang";
+        const buttons = Array.from(document.querySelectorAll("[data-lang-btn]"));
+        const blocks = Array.from(document.querySelectorAll("[data-lang-content]"));
+
+        function normalize(lang) {
+          return lang === "en" ? "en" : "hu";
+        }
+
+        function setLanguage(lang) {
+          const resolved = normalize(lang);
+          document.documentElement.lang = resolved;
+          buttons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.langBtn === resolved);
+          });
+          blocks.forEach((block) => {
+            block.hidden = block.dataset.langContent !== resolved;
+          });
+          try {
+            localStorage.setItem(key, resolved);
+          } catch (error) {
+            // Ignore storage errors silently.
+          }
+        }
+
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            setLanguage(btn.dataset.langBtn);
+          });
+        });
+
+        let initial = "hu";
+        try {
+          initial = normalize(localStorage.getItem(key));
+        } catch (error) {
+          initial = "hu";
+        }
+        setLanguage(initial);
+      })();
+    </script>
   </body>
 </html>

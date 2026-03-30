@@ -1,9 +1,189 @@
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const fs = require("fs");
+const path = require("path");
 const OPENAI_API_URL = "https://api.openai.com/v1/responses";
+
+const ALLOWED_STATEMENT_SYNTAX = [
+  'REM szoveg',
+  'DATA ertek[,ertek...]',
+  'END',
+  'STOP',
+  'CLR',
+  'CLS',
+  'CLSG',
+  'COLOR szin',
+  'COLOR source,color',
+  'GRAPHIC mode[,c][,s] | GRAPHIC CLR',
+  'SCNCLR [mode]',
+  'PRINT expr[;|, ...] | ? expr',
+  'PRINT# csatorna[,expr][;|, ...]',
+  'INPUT ["prompt";]valtozo[,valtozo...]',
+  'INPUT# csatorna,valtozo[,valtozo...]',
+  'GET valtozo[,valtozo...]',
+  'GET# csatorna,valtozo[,valtozo...]',
+  'READ valtozo[,valtozo...]',
+  'RESTORE [sorszam]',
+  'DIM TOMB(m1[,m2...])',
+  'DEF FNnev(param)=kifejezes',
+  'IF feltetel THEN utasitas|sorszam [ELSE utasitas|sorszam]',
+  'ON index GOTO s1[,s2...]',
+  'ON index GOSUB s1[,s2...]',
+  'FOR V=kezdo TO veg [STEP lepes]',
+  'NEXT [V[,V2...]]',
+  'GOTO sorszam',
+  'GOSUB sorszam',
+  'RETURN',
+  'POKE cim,ertek',
+  'WAIT cim,maszk[,ertek]',
+  'PLOT x,y[,szin]',
+  'LINE x1,y1,x2,y2[,szin]',
+  'RECT x,y,szel,mag[,szin] [FILL]',
+  'CIRCLE x,y,r[,szin] [FILL]',
+  'CIRCLE [source],x,y,xr[,yr][,sa][,ea][,angle][,inc]',
+  'DRAW [source],x1,y1 [TO x2,y2] ...',
+  'BOX [source],x1,y1[,x2,y2][,angle][,paint]',
+  'PAINT [source],x,y[,mode]',
+  'OPEN csatorna,eszkoz[,masodlagos][,"parancs"]',
+  'CLOSE csatorna',
+  'CMD [csatorna]',
+  'SYS cim[,A][,X][,Y]',
+  'LET valtozo = kifejezes',
+  'valtozo = kifejezes',
+];
+
+const ALLOWED_FUNCTIONS = [
+  "SGN",
+  "INT",
+  "ABS",
+  "USR",
+  "FRE",
+  "POS",
+  "SQR",
+  "RND",
+  "LOG",
+  "EXP",
+  "COS",
+  "SIN",
+  "TAN",
+  "ATN",
+  "PEEK",
+  "LEN",
+  "VAL",
+  "ASC",
+  "STR$",
+  "CHR$",
+  "LEFT$",
+  "RIGHT$",
+  "MID$",
+  "TI",
+  "TI$",
+  "ST",
+];
+
+const IMMEDIATE_ONLY_COMMANDS = [
+  "LIST [kezdo[-zaro]]",
+  "RUN [sorszam]",
+  "NEW",
+  "CONT",
+  'SAVE "nev"[,eszkoz]',
+  'LOAD "nev"[,eszkoz][,mod]',
+  'VERIFY "nev"[,eszkoz]',
+  "HELP",
+  "TESTPACK",
+];
+
+const EXACT_STATEMENTS = new Set([
+  "END",
+  "STOP",
+  "CLS",
+  "CLSG",
+  "CLR",
+  "RETURN",
+]);
+
+const PREFIX_STATEMENTS = [
+  "REM",
+  "DATA",
+  "COLOR",
+  "GRAPHIC",
+  "SCNCLR",
+  "PRINT#",
+  "PRINT",
+  "INPUT#",
+  "INPUT",
+  "GET#",
+  "GET",
+  "READ",
+  "RESTORE",
+  "DIM",
+  "DEF FN",
+  "IF",
+  "ON",
+  "FOR",
+  "NEXT",
+  "GOTO",
+  "GOSUB",
+  "RETURN",
+  "POKE",
+  "WAIT",
+  "PLOT",
+  "LINE",
+  "RECT",
+  "CIRCLE",
+  "DRAW",
+  "BOX",
+  "PAINT",
+  "OPEN",
+  "CLOSE",
+  "CMD",
+  "SYS",
+  "LET",
+];
 
 function sendJson(res, status, payload) {
   res.status(status).json(payload);
+}
+
+function parseDotEnv(text) {
+  const out = {};
+  String(text || "")
+    .split(/\r?\n/)
+    .forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return;
+      const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match) return;
+      let value = match[2] || "";
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      out[match[1]] = value;
+    });
+  return out;
+}
+
+function readLocalEnvFile() {
+  const envPath = path.join(process.cwd(), ".env.local");
+  try {
+    if (fs.existsSync(envPath)) {
+      const raw = fs.readFileSync(envPath, "utf8");
+      return parseDotEnv(raw);
+    }
+  } catch (error) {
+    return {};
+  }
+
+  return {};
+}
+
+function getRuntimeConfig() {
+  const localFile = readLocalEnvFile();
+  const apiKey = process.env.OPENAI_API_KEY || localFile.OPENAI_API_KEY || "";
+  const model = process.env.OPENAI_MODEL || localFile.OPENAI_MODEL || "gpt-4.1-mini";
+  const source = process.env.OPENAI_API_KEY ? "process.env" : localFile.OPENAI_API_KEY ? ".env.local" : "none";
+  return { apiKey, model, source };
 }
 
 function parseBody(body) {
@@ -121,11 +301,122 @@ function normalizeTitle(value) {
   return text || "AI BASIC PROGRAM";
 }
 
+function splitStatementsC64(lineText) {
+  const parts = [];
+  let current = "";
+  let inString = false;
+
+  for (let i = 0; i < lineText.length; i += 1) {
+    const ch = lineText[i];
+    if (ch === '"') {
+      inString = !inString;
+      current += ch;
+      continue;
+    }
+    if (ch === ":" && !inString) {
+      parts.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+
+  if (current.trim() || parts.length) {
+    parts.push(current.trim());
+  }
+  return parts.filter(Boolean);
+}
+
+function findTopLevelEquals(text) {
+  let inString = false;
+  let depth = 0;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth = Math.max(0, depth - 1);
+      if (depth === 0 && ch === "=") {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function isAssignmentStatement(stmt) {
+  const text = stmt.trim();
+  const maybeLet = text.replace(/^LET\s+/i, "").trim();
+  const eqPos = findTopLevelEquals(maybeLet);
+  if (eqPos < 0) {
+    return false;
+  }
+
+  const left = maybeLet.slice(0, eqPos).trim();
+  return /^[A-Za-z][A-Za-z0-9$]*(?:\s*\(.*\))?$/.test(left);
+}
+
+function isAllowedStatement(stmt) {
+  const trimmed = stmt.trim();
+  if (!trimmed) return true;
+  if (trimmed.startsWith("?")) return true;
+  if (isAssignmentStatement(trimmed)) return true;
+
+  const upper = trimmed.toUpperCase();
+  if (EXACT_STATEMENTS.has(upper)) {
+    return true;
+  }
+  return PREFIX_STATEMENTS.some((prefix) => matchesStatementPrefix(upper, prefix));
+}
+
+function matchesStatementPrefix(statementUpper, prefixUpper) {
+  if (!statementUpper.startsWith(prefixUpper)) {
+    return false;
+  }
+
+  if (statementUpper.length === prefixUpper.length) {
+    return true;
+  }
+
+  // Commands ending with space or # already mark an unambiguous keyword boundary.
+  const tail = prefixUpper[prefixUpper.length - 1];
+  if (tail === " " || tail === "#") {
+    return true;
+  }
+
+  const next = statementUpper[prefixUpper.length];
+  return !/[A-Z0-9$]/.test(next);
+}
+
+function validateGeneratedProgram(lines) {
+  const errors = [];
+  lines.forEach(([lineNumber, lineText]) => {
+    const statements = splitStatementsC64(String(lineText || ""));
+    statements.forEach((stmt) => {
+      if (!isAllowedStatement(stmt)) {
+        errors.push(`LINE ${lineNumber}: ${stmt}`);
+      }
+    });
+  });
+
+  return {
+    ok: errors.length === 0,
+    errors,
+  };
+}
+
 module.exports = async (req, res) => {
+  const config = getRuntimeConfig();
+
   if (req.method === "GET") {
     return sendJson(res, 200, {
-      enabled: Boolean(OPENAI_API_KEY),
-      model: OPENAI_API_KEY ? OPENAI_MODEL : "",
+      enabled: Boolean(config.apiKey),
+      model: config.apiKey ? config.model : "",
+      source: config.source,
     });
   }
 
@@ -133,7 +424,7 @@ module.exports = async (req, res) => {
     return sendJson(res, 405, { error: "METHOD NOT ALLOWED" });
   }
 
-  if (!OPENAI_API_KEY) {
+  if (!config.apiKey) {
     return sendJson(res, 503, { enabled: false, error: "AI DISABLED" });
   }
 
@@ -144,18 +435,29 @@ module.exports = async (req, res) => {
   }
 
   const systemPrompt = [
-    "You generate Commodore 64 BASIC V2 compatible code for a line-numbered editor.",
-    "Return ONLY valid JSON with this shape:",
+    "You generate BASIC code for a specific line-numbered C64-style emulator.",
+    "You MUST use ONLY the supported statements listed below.",
+    "",
+    "SUPPORTED STATEMENTS:",
+    ...ALLOWED_STATEMENT_SYNTAX.map((s) => `- ${s}`),
+    "",
+    "IMMEDIATE-ONLY COMMANDS (do NOT place these inside generated program lines):",
+    ...IMMEDIATE_ONLY_COMMANDS.map((s) => `- ${s}`),
+    "",
+    `SUPPORTED FUNCTIONS/IDENTIFIERS: ${ALLOWED_FUNCTIONS.join(", ")}`,
+    "OPERATORS: + - * / ^ AND OR NOT = <> < > <= >=",
+    "",
+    "Return ONLY valid JSON with this exact shape:",
     '{"title":"SHORT NAME","lines":[[10,"..."],[20,"..."]]}',
     "Rules:",
-    "- line numbers must be ascending and unique",
-    "- use runnable BASIC in this emulator",
+    "- line numbers must be positive, ascending and unique",
     "- no markdown, no explanation, no extra keys",
-    "- keep program reasonably short",
+    "- keep program runnable and concise",
+    "- do not emit unsupported commands",
   ].join("\n");
 
   const requestPayload = {
-    model: OPENAI_MODEL,
+    model: config.model,
     input: [
       { role: "system", content: systemPrompt },
       { role: "user", content: `Feladat: ${task}` },
@@ -168,7 +470,7 @@ module.exports = async (req, res) => {
     const response = await fetch(OPENAI_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestPayload),
@@ -187,9 +489,17 @@ module.exports = async (req, res) => {
       return sendJson(res, 502, { error: "AI RESPONSE HAS NO PROGRAM LINES" });
     }
 
+    const validation = validateGeneratedProgram(lines);
+    if (!validation.ok) {
+      return sendJson(res, 502, {
+        error: "AI USED UNSUPPORTED STATEMENT",
+        details: validation.errors.slice(0, 8),
+      });
+    }
+
     return sendJson(res, 200, {
       enabled: true,
-      model: OPENAI_MODEL,
+      model: config.model,
       title: normalizeTitle(parsed?.title || task),
       lines,
     });

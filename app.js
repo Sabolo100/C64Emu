@@ -259,6 +259,7 @@ const aiState = {
   busy: false,
   checked: false,
   model: "",
+  source: "",
 };
 
 function createNoopContext() {
@@ -1028,14 +1029,14 @@ function updateAiButtonState() {
   if (!aiState.enabled) {
     aiGenerateEl.disabled = true;
     aiGenerateEl.textContent = "AI OFF";
-    aiGenerateEl.title = "OPENAI_API_KEY nincs beallitva ezen a deployon.";
+    aiGenerateEl.title = "OPENAI_API_KEY nincs beallitva (Vercel env vagy .env.local).";
     return;
   }
 
   aiGenerateEl.disabled = false;
   aiGenerateEl.textContent = "AI";
   aiGenerateEl.title = aiState.model
-    ? `AI BASIC generator (${aiState.model})`
+    ? `AI BASIC generator (${aiState.model}${aiState.source ? ` | ${aiState.source}` : ""})`
     : "AI BASIC generator";
 }
 
@@ -1043,6 +1044,7 @@ async function refreshAiAvailability() {
   aiState.checked = false;
   aiState.enabled = false;
   aiState.model = "";
+  aiState.source = "";
   updateAiButtonState();
 
   try {
@@ -1059,9 +1061,11 @@ async function refreshAiAvailability() {
 
     aiState.enabled = Boolean(response.ok && payload?.enabled);
     aiState.model = payload?.model ? String(payload.model) : "";
+    aiState.source = payload?.source ? String(payload.source) : "";
   } catch (error) {
     aiState.enabled = false;
     aiState.model = "";
+    aiState.source = "";
   } finally {
     aiState.checked = true;
     updateAiButtonState();
@@ -1117,7 +1121,10 @@ async function requestAiProgram(taskText) {
   }
 
   if (!response.ok) {
-    const message = payload?.error ? String(payload.error).toUpperCase() : "AI REQUEST ERROR";
+    let message = payload?.error ? String(payload.error).toUpperCase() : "AI REQUEST ERROR";
+    if (Array.isArray(payload?.details) && payload.details.length) {
+      message += `: ${String(payload.details[0]).toUpperCase()}`;
+    }
     throw new BasicError(message);
   }
 
@@ -1222,6 +1229,72 @@ function clearProgramEditCursor() {
   terminal.programEditLineIndex = -1;
 }
 
+function alignInputViewport() {
+  if (terminal.programEditLineNumber != null) {
+    ensureProgramEditVisible();
+    return;
+  }
+  terminal.viewOffset = 0;
+}
+
+function getCurrentCursorLine() {
+  const cursor = terminal.cursorVisible ? "\u2588" : " ";
+  const before = terminal.input.slice(0, terminal.cursorPos);
+  const after = terminal.input.slice(terminal.cursorPos);
+  return `${before}${cursor}${after}`;
+}
+
+function getWrappedRowCountForLine(line) {
+  const text = String(line ?? "");
+  return Math.max(1, Math.ceil(text.length / C64_COLUMNS));
+}
+
+function ensureProgramEditVisible() {
+  const lineNumber = terminal.programEditLineNumber;
+  if (lineNumber == null) {
+    return;
+  }
+
+  let textLineIndex = terminal.programEditLineIndex;
+  const renderedLines = buildRenderText(getCurrentCursorLine()).split("\n");
+
+  if (!isProgramLineAt(renderedLines, textLineIndex, lineNumber)) {
+    const re = new RegExp(`^\\s*${lineNumber}\\b`);
+    textLineIndex = renderedLines.findIndex((line) => re.test(line || ""));
+    terminal.programEditLineIndex = textLineIndex;
+  }
+
+  if (textLineIndex < 0 || textLineIndex >= renderedLines.length) {
+    return;
+  }
+
+  let wrappedStart = 0;
+  for (let i = 0; i < textLineIndex; i += 1) {
+    wrappedStart += getWrappedRowCountForLine(renderedLines[i]);
+  }
+
+  const wrappedHeight = getWrappedRowCountForLine(renderedLines[textLineIndex]);
+  const wrappedTotal = renderedLines.reduce((sum, line) => sum + getWrappedRowCountForLine(line), 0);
+  const rows = getVisibleRows();
+  const currentEnd = Math.max(0, wrappedTotal - terminal.viewOffset);
+  const currentStart = Math.max(0, currentEnd - rows);
+  const targetEnd = wrappedStart + wrappedHeight;
+
+  if (wrappedStart >= currentStart && targetEnd <= currentEnd) {
+    return;
+  }
+
+  let desiredStart = currentStart;
+  if (wrappedStart < currentStart) {
+    desiredStart = wrappedStart;
+  } else if (targetEnd > currentEnd) {
+    desiredStart = targetEnd - rows;
+  }
+
+  desiredStart = Math.max(0, Math.min(desiredStart, Math.max(0, wrappedTotal - rows)));
+  terminal.viewOffset = Math.max(0, wrappedTotal - Math.min(wrappedTotal, desiredStart + rows));
+}
+
 function openProgramLineForEdit(lineNumber) {
   if (!machine.program.has(lineNumber)) {
     return false;
@@ -1229,7 +1302,12 @@ function openProgramLineForEdit(lineNumber) {
 
   terminal.programEditLineNumber = lineNumber;
   terminal.programEditLineIndex = findProgramLineIndexInText(lineNumber);
-  setInputLine(`${lineNumber} ${machine.program.get(lineNumber) ?? ""}`);
+  terminal.input = `${lineNumber} ${machine.program.get(lineNumber) ?? ""}`;
+  terminal.cursorPos = terminal.input.length;
+  terminal.viewOffset = 0;
+  scheduleSessionPersist();
+  ensureProgramEditVisible();
+  render();
   return true;
 }
 
@@ -1350,7 +1428,7 @@ function insertTextAtCursor(text) {
   const right = terminal.input.slice(terminal.cursorPos);
   terminal.input = `${left}${text}${right}`;
   terminal.cursorPos += text.length;
-  terminal.viewOffset = 0;
+  alignInputViewport();
   scheduleSessionPersist();
   render();
 }
@@ -1552,7 +1630,7 @@ window.addEventListener("keydown", (event) => {
         terminal.input =
           terminal.input.slice(0, terminal.cursorPos - 1) + terminal.input.slice(terminal.cursorPos);
         terminal.cursorPos -= 1;
-        terminal.viewOffset = 0;
+        alignInputViewport();
         scheduleSessionPersist();
         render();
       }
@@ -1561,19 +1639,19 @@ window.addEventListener("keydown", (event) => {
       if (terminal.cursorPos < terminal.input.length) {
         terminal.input =
           terminal.input.slice(0, terminal.cursorPos) + terminal.input.slice(terminal.cursorPos + 1);
-        terminal.viewOffset = 0;
+        alignInputViewport();
         scheduleSessionPersist();
         render();
       }
       return;
     case "ArrowLeft":
       terminal.cursorPos = Math.max(0, terminal.cursorPos - 1);
-      terminal.viewOffset = 0;
+      alignInputViewport();
       render();
       return;
     case "ArrowRight":
       terminal.cursorPos = Math.min(terminal.input.length, terminal.cursorPos + 1);
-      terminal.viewOffset = 0;
+      alignInputViewport();
       render();
       return;
     case "ArrowUp":
@@ -1598,12 +1676,12 @@ window.addEventListener("keydown", (event) => {
       return;
     case "Home":
       terminal.cursorPos = 0;
-      terminal.viewOffset = 0;
+      alignInputViewport();
       render();
       return;
     case "End":
       terminal.cursorPos = terminal.input.length;
-      terminal.viewOffset = 0;
+      alignInputViewport();
       render();
       return;
     case "Tab":
